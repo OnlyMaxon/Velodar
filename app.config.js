@@ -49,7 +49,6 @@ module.exports = () => ({
     },
 
     plugins: [
-      'expo-dev-client',
       [
         'expo-location',
         {

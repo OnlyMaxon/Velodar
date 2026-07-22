@@ -4,7 +4,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "expo start --dev-client",
+    "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
@@ -17,7 +17,6 @@
     "expo": "^57.0.7",
     "expo-asset": "~57.0.6",
     "expo-constants": "~57.0.6",
-    "expo-dev-client": "~57.0.7",
     "expo-location": "~57.0.5",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.1",
