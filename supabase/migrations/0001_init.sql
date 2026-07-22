@@ -1,5 +1,5 @@
 -- ============================================================================
--- Bike Radar — initial schema
+-- Velodar — initial schema
 -- Postgres + PostGIS + Realtime + Auth (anonymous)
 -- ----------------------------------------------------------------------------
 -- Run this in the Supabase SQL editor, or via `supabase db push`.
@@ -240,11 +240,15 @@ $$;
 do $$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
+    -- Clear any prior job (current or legacy 'bike_radar_*' name) before rescheduling.
+    if exists (select 1 from cron.job where jobname = 'velodar_expire_reports') then
+      perform cron.unschedule('velodar_expire_reports');
+    end if;
     if exists (select 1 from cron.job where jobname = 'bike_radar_expire_reports') then
       perform cron.unschedule('bike_radar_expire_reports');
     end if;
     perform cron.schedule(
-      'bike_radar_expire_reports',
+      'velodar_expire_reports',
       '* * * * *',
       $cron$ select public.expire_reports(); $cron$
     );

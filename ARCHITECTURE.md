@@ -1,11 +1,11 @@
-# Bike Radar — Architecture
+# Velodar — Architecture
 
 > Onboarding doc for anyone (human or AI agent) opening this repo fresh.
 > Read this first, then `README.md` for setup/run commands.
 
 ## What this is
 
-**Bike Radar** — "Waze for cyclists" in Poland. A community app where cyclists
+**Velodar** — "Waze for cyclists" in Poland. A community app where cyclists
 report **police posts, speed cameras and e-bike controls**, see them as live map
 markers, and vote them up/down (Waze-style "still there / gone"). It also does
 **live speed tracking** with a visual alert when you exceed the 25 km/h e-bike
@@ -165,7 +165,7 @@ Android tiles stay blank until `GOOGLE_MAPS_ANDROID_API_KEY` is set **and**
 E2E smoke-tested via REST (anon sign-in → create_report → nearby_reports →
 cast_vote — counts and `my_vote` correct); `npm install` + version alignment
 (`expo install --check` clean); Android `expo prebuild` clean (perms + package
-`com.bikeradar.app` correct in manifest).
+`com.velodar.app` correct in manifest).
 
 **Not yet done:** native device build (`expo run:android|ios --device`) — no
 device available at time of writing. Android Google Maps key not yet set.

@@ -14,9 +14,9 @@ const GOOGLE_MAPS_ANDROID_API_KEY =
 
 module.exports = () => ({
   expo: {
-    name: 'Bike Radar',
-    slug: 'bike-radar',
-    scheme: 'bikeradar',
+    name: 'Velodar',
+    slug: 'velodar',
+    scheme: 'velodar',
     version: '0.1.0',
     orientation: 'portrait',
     userInterfaceStyle: 'light',
@@ -25,17 +25,17 @@ module.exports = () => ({
 
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.bikeradar.app',
+      bundleIdentifier: 'com.velodar.app',
       infoPlist: {
         // Foreground-only tracking for MVP.
         NSLocationWhenInUseUsageDescription:
-          'Bike Radar uses your location to show your position, nearby reports and your live speed.',
+          'Velodar uses your location to show your position, nearby reports and your live speed.',
         UIBackgroundModes: [],
       },
     },
 
     android: {
-      package: 'com.bikeradar.app',
+      package: 'com.velodar.app',
       permissions: [
         'ACCESS_FINE_LOCATION',
         'ACCESS_COARSE_LOCATION',
@@ -54,7 +54,7 @@ module.exports = () => ({
         'expo-location',
         {
           locationAlwaysAndWhenInUsePermission:
-            'Bike Radar uses your location to show your position, nearby reports and your live speed.',
+            'Velodar uses your location to show your position, nearby reports and your live speed.',
           isAndroidForegroundServiceEnabled: false,
         },
       ],

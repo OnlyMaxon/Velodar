@@ -1,4 +1,4 @@
-# Bike Radar 🚲📍
+# Velodar 🚲📍
 
 "Waze for cyclists" — a community-based reporting app for **police posts, speed
 cameras and e-bike controls** in Poland, plus **live speed tracking** with a
@@ -73,7 +73,7 @@ Fill in:
 - `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` — from step 1.4.
 - `GOOGLE_MAPS_ANDROID_API_KEY` — a Google Maps SDK key (Android only; iOS uses
   Apple Maps). Enable "Maps SDK for Android" in Google Cloud and restrict the key
-  to the app's package `com.bikeradar.app`.
+  to the app's package `com.velodar.app`.
 
 > The anon key is public by design — safety comes from Row Level Security, not
 > from hiding it. Never put a `service_role` key in the app.
@@ -112,7 +112,7 @@ npx expo start --dev-client
 > `react-native-maps`, `expo-location`, etc. on the versions Expo SDK 52 expects).
 
 ### iOS local device notes
-- Open `ios/BikeRadar.xcworkspace` once in Xcode, select your device, and set a
+- Open `ios/Velodar.xcworkspace` once in Xcode, select your device, and set a
   free **Personal Team** under Signing & Capabilities (auto-manage signing).
 - Trust the developer profile on the device: Settings → General → VPN & Device
   Management. Free-provisioned apps expire after 7 days; just re-run to refresh.
