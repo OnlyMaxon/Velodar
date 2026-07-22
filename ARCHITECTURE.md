@@ -159,13 +159,25 @@ Android tiles stay blank until `GOOGLE_MAPS_ANDROID_API_KEY` is set **and**
 - **`android/` is generated** — edit `app.config.js`, not native files; regenerate
   with prebuild.
 
+## Version control
+
+- **Remote:** `origin` → https://github.com/OnlyMaxon/Velodar.git, branch `main`.
+- **Gitignored (never committed):** `.env`, `node_modules/`, `android/` (+`/ios`),
+  `CLAUDE.md`, `.claude/settings.local.json`. So a fresh clone has **no** `.env`,
+  `CLAUDE.md`, or native folders — regenerate: copy `.env.example`→`.env`, fill
+  keys, `npm install`, `npx expo prebuild`.
+- **Workflow:** the repo owner runs `git commit` / `git push` themselves. Prep the
+  tree and stage, but don't commit or push unless explicitly asked.
+
 ## Current status (2026-07-22)
 
-**Verified working:** SQL migration applied; anonymous sign-ins enabled; backend
-E2E smoke-tested via REST (anon sign-in → create_report → nearby_reports →
-cast_vote — counts and `my_vote` correct); `npm install` + version alignment
-(`expo install --check` clean); Android `expo prebuild` clean (perms + package
-`com.velodar.app` correct in manifest).
+**Verified working:** app renamed **Bike Radar → Velodar** everywhere (name, slug
+`velodar`, package `com.velodar.app`) and pushed to GitHub. SQL migration applied
+(and re-applied cleanly after the rename — cron job is now `velodar_expire_reports`);
+anonymous sign-ins enabled; backend E2E smoke-tested via REST twice (anon sign-in →
+create_report → nearby_reports → cast_vote — counts and `my_vote` correct);
+`npm install` + version alignment (`expo install --check` clean); Android
+`expo prebuild` clean (perms + package correct in manifest).
 
 **Not yet done:** native device build (`expo run:android|ios --device`) — no
 device available at time of writing. Android Google Maps key not yet set.
