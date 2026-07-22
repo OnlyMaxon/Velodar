@@ -18,9 +18,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Location from 'expo-location';
 import { distanceMeters, msToKmh } from '../utils/geo';
 
-export const SPEED_LIMIT_KMH = 25; // legal assist limit (PL e-bike)
-const ALERT_ON_KMH = 28; // start warning above this (buffer over the limit)
-const ALERT_OFF_KMH = 25; // stop warning below this (hysteresis)
+export const SPEED_LIMIT_KMH = 25; // default legal assist limit (PL e-bike)
+const ALERT_BUFFER_KMH = 3; // warn this much OVER the limit (anti-flicker buffer)
 
 const WINDOW = 5; // samples kept for the median
 const EMA_ALPHA = 0.4; // 0..1 — higher = snappier, lower = smoother
@@ -35,7 +34,11 @@ function median(arr) {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
-export function useSpeedTracking({ enabled = true } = {}) {
+export function useSpeedTracking({
+  enabled = true,
+  limitKmh = SPEED_LIMIT_KMH,
+  alertEnabled = true,
+} = {}) {
   const [speedKmh, setSpeedKmh] = useState(0);
   const [isOverLimit, setIsOverLimit] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
@@ -46,6 +49,19 @@ export function useSpeedTracking({ enabled = true } = {}) {
   const emaRef = useRef(0); // smoothed value
   const lastFixRef = useRef(null); // { lat, lng, t } for fallback derivation
   const overRef = useRef(false); // current hysteresis state
+
+  // Live settings via refs so changing them doesn't restart the GPS watcher.
+  const limitRef = useRef(limitKmh);
+  const alertEnabledRef = useRef(alertEnabled);
+  useEffect(() => {
+    limitRef.current = limitKmh;
+    alertEnabledRef.current = alertEnabled;
+    // Clear an active alert immediately if it was turned off / limit raised.
+    if (overRef.current && (!alertEnabled || speedKmh < limitKmh)) {
+      overRef.current = false;
+      setIsOverLimit(false);
+    }
+  }, [limitKmh, alertEnabled, speedKmh]);
 
   const reset = () => {
     windowRef.current = [];
@@ -101,11 +117,13 @@ export function useSpeedTracking({ enabled = true } = {}) {
     const smoothed = emaRef.current < ZERO_CLAMP_KMH ? 0 : emaRef.current;
     setSpeedKmh(smoothed);
 
-    // Alert with hysteresis.
-    if (!overRef.current && smoothed >= ALERT_ON_KMH) {
+    // Alert with hysteresis (on at limit+buffer, off at limit).
+    const alertOn = limitRef.current + ALERT_BUFFER_KMH;
+    const alertOff = limitRef.current;
+    if (alertEnabledRef.current && !overRef.current && smoothed >= alertOn) {
       overRef.current = true;
       setIsOverLimit(true);
-    } else if (overRef.current && smoothed < ALERT_OFF_KMH) {
+    } else if (overRef.current && smoothed < alertOff) {
       overRef.current = false;
       setIsOverLimit(false);
     }
@@ -147,5 +165,5 @@ export function useSpeedTracking({ enabled = true } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
-  return { speedKmh, isOverLimit, isTracking, error, start, stop, SPEED_LIMIT_KMH };
+  return { speedKmh, isOverLimit, isTracking, error, start, stop, limitKmh };
 }

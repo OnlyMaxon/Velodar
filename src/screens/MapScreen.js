@@ -1,7 +1,7 @@
 // MapScreen — the whole MVP UI on one screen:
 //  - MapView centred on the user, showing nearby report markers (live-synced).
-//  - Speed readout + over-limit alert (useSpeedTracking).
-//  - "Locate me" button + floating "+" to add a report at the current position.
+//  - Speed readout + over-limit alert (useSpeedTracking, configurable via menu).
+//  - Side menu (filters / speed settings / stats), "locate me", and "+" to report.
 //  - Tapping a marker opens a bottom card with "actual" / "gone" voting.
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -27,22 +27,39 @@ import ReportCard from '../components/ReportCard';
 import AddReportModal from '../components/AddReportModal';
 import SpeedIndicator from '../components/SpeedIndicator';
 import SpeedAlert from '../components/SpeedAlert';
+import SideMenu from '../components/SideMenu';
 
 const RADIUS_METERS = 15000; // ~15 km pull radius
 
 // Warsaw fallback until the first fix arrives.
 const FALLBACK = { latitude: 52.2297, longitude: 21.0122 };
 
+const ALL_TYPES_VISIBLE = { police: true, camera: true, ebike_control: true };
+
 export default function MapScreen() {
   const mapRef = useRef(null);
   const centeredOnce = useRef(false);
 
   const { location, permissionDenied, refresh: refreshLocation } = useLocation();
-  const { speedKmh, isOverLimit, SPEED_LIMIT_KMH } = useSpeedTracking();
+
+  const [settings, setSettings] = useState({ limitKmh: 25, alertEnabled: true });
+  const { speedKmh, isOverLimit, limitKmh } = useSpeedTracking({
+    limitKmh: settings.limitKmh,
+    alertEnabled: settings.alertEnabled,
+  });
+
   const { reports, refresh } = useReports({ location, radiusMeters: RADIUS_METERS });
 
   const [selected, setSelected] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [filters, setFilters] = useState(ALL_TYPES_VISIBLE);
+
+  // Markers actually drawn = reports whose type is toggled on in the menu.
+  const visibleReports = useMemo(
+    () => reports.filter((r) => filters[r.type]),
+    [reports, filters]
+  );
 
   const initialRegion = useMemo(() => {
     const base = location ?? FALLBACK;
@@ -74,8 +91,7 @@ export default function MapScreen() {
       {
         latitude: coords.latitude,
         longitude: coords.longitude,
-        // Zoom in closer when the user taps "locate me".
-        latitudeDelta: 0.01,
+        latitudeDelta: 0.01, // zoom in close on "locate me"
         longitudeDelta: 0.01,
       },
       duration
@@ -91,8 +107,7 @@ export default function MapScreen() {
     if (!location) return;
     try {
       await createReport(typeId, location.latitude, location.longitude);
-      // Realtime will deliver the new row; refresh as a safety net.
-      refresh();
+      refresh(); // realtime also delivers it; this is a safety net
     } catch (e) {
       Alert.alert('Nie udało się dodać', e?.message ?? 'Spróbuj ponownie');
       throw e;
@@ -108,37 +123,46 @@ export default function MapScreen() {
     }
   };
 
+  const toggleFilter = (typeId) =>
+    setFilters((f) => ({ ...f, [typeId]: !f[typeId] }));
+
+  const changeSettings = (partial) => setSettings((s) => ({ ...s, ...partial }));
+
   return (
     <View style={styles.root}>
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
-        // Default provider: Google Maps on Android (its only option, needs an
-        // API key in app config), Apple Maps on iOS (no key required).
+        // Default provider: Google Maps on Android, Apple Maps on iOS.
         initialRegion={initialRegion}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
         onPress={() => setSelected(null)}
       >
-        {reports.map((r) => (
+        {visibleReports.map((r) => (
           <ReportMarker key={r.id} report={r} onPress={setSelected} />
         ))}
       </MapView>
 
       {/* Over-limit visual alert (no sound on MVP). */}
-      <SpeedAlert visible={isOverLimit} limitKmh={SPEED_LIMIT_KMH} />
+      <SpeedAlert visible={isOverLimit} limitKmh={limitKmh} />
 
-      {/* Top bar: brand + speed */}
+      {/* Top bar: menu button + speed */}
       <SafeAreaView style={styles.topBar} pointerEvents="box-none">
-        <View style={styles.brand}>
-          <Ionicons name="bicycle" size={18} color="#2563eb" />
+        <Pressable
+          style={({ pressed }) => [styles.menuBtn, pressed && styles.pressed]}
+          onPress={() => setMenuOpen(true)}
+          hitSlop={8}
+        >
+          <Ionicons name="menu" size={22} color="#111827" />
           <Text style={styles.brandText}>Velodar</Text>
-        </View>
+        </Pressable>
+
         <SpeedIndicator
           speedKmh={speedKmh}
           isOverLimit={isOverLimit}
-          limitKmh={SPEED_LIMIT_KMH}
+          limitKmh={limitKmh}
         />
       </SafeAreaView>
 
@@ -192,6 +216,16 @@ export default function MapScreen() {
         onClose={() => setAddOpen(false)}
         onSubmit={handleAdd}
       />
+
+      <SideMenu
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        filters={filters}
+        onToggleFilter={toggleFilter}
+        settings={settings}
+        onChangeSettings={changeSettings}
+        reports={reports}
+      />
     </View>
   );
 }
@@ -208,22 +242,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  brand: {
+  menuBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    paddingLeft: 12,
+    paddingRight: 16,
+    paddingVertical: 9,
     borderRadius: 999,
     marginTop: 8,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
   brandText: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.96 }] },
 
   permWarn: {
     position: 'absolute',
@@ -236,7 +272,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 64,
+    marginTop: 62,
     backgroundColor: 'rgba(180,83,9,0.96)',
     paddingVertical: 9,
     paddingHorizontal: 14,
@@ -264,7 +300,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 5,
   },
-  pressed: { opacity: 0.7, transform: [{ scale: 0.96 }] },
   fab: {
     width: 64,
     height: 64,
