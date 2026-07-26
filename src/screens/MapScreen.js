@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocation } from '../hooks/useLocation';
 import { useSpeedTracking } from '../hooks/useSpeedTracking';
 import { useReports, createReport, castVote } from '../hooks/useReports';
+import { useProximityAlerts } from '../hooks/useProximityAlerts';
 import { radiusToDelta } from '../utils/geo';
 
 import ReportMarker from '../components/ReportMarker';
@@ -27,6 +28,7 @@ import ReportCard from '../components/ReportCard';
 import AddReportModal from '../components/AddReportModal';
 import SpeedIndicator from '../components/SpeedIndicator';
 import SpeedAlert from '../components/SpeedAlert';
+import ProximityBanner from '../components/ProximityBanner';
 import SideMenu from '../components/SideMenu';
 
 const RADIUS_METERS = 15000; // ~15 km pull radius
@@ -42,7 +44,11 @@ export default function MapScreen() {
 
   const { location, permissionDenied, refresh: refreshLocation } = useLocation();
 
-  const [settings, setSettings] = useState({ limitKmh: 25, alertEnabled: true });
+  const [settings, setSettings] = useState({
+    limitKmh: 25,
+    alertEnabled: true,
+    proximityEnabled: true,
+  });
   const { speedKmh, isOverLimit, limitKmh } = useSpeedTracking({
     limitKmh: settings.limitKmh,
     alertEnabled: settings.alertEnabled,
@@ -60,6 +66,13 @@ export default function MapScreen() {
     () => reports.filter((r) => filters[r.type]),
     [reports, filters]
   );
+
+  // Radar: warn as we approach a visible report.
+  const { approaching } = useProximityAlerts({
+    location,
+    reports: visibleReports,
+    enabled: settings.proximityEnabled,
+  });
 
   const initialRegion = useMemo(() => {
     const base = location ?? FALLBACK;
@@ -147,6 +160,9 @@ export default function MapScreen() {
 
       {/* Over-limit visual alert (no sound on MVP). */}
       <SpeedAlert visible={isOverLimit} limitKmh={limitKmh} />
+
+      {/* Radar: "report ahead" banner as you approach one. */}
+      <ProximityBanner approaching={approaching} />
 
       {/* Top bar: menu button + speed */}
       <SafeAreaView style={styles.topBar} pointerEvents="box-none">

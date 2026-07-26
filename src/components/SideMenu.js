@@ -135,6 +135,25 @@ export default function SideMenu({
               </View>
             </Section>
 
+            {/* Radar */}
+            <Section icon="radio-outline" title="Radar">
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <Ionicons name="notifications-outline" size={20} color="#2563eb" />
+                  <Text style={styles.rowLabel}>Alert o zbliżaniu</Text>
+                </View>
+                <Switch
+                  value={!!settings.proximityEnabled}
+                  onValueChange={(v) => onChangeSettings({ proximityEnabled: v })}
+                  trackColor={{ true: '#2563eb', false: '#e5e7eb' }}
+                  thumbColor="#fff"
+                />
+              </View>
+              <Text style={styles.hint}>
+                Wibracja i baner, gdy zbliżasz się do zgłoszenia (~400 m).
+              </Text>
+            </Section>
+
             {/* Stats */}
             <Section icon="stats-chart-outline" title="W pobliżu">
               <View style={styles.statBig}>
@@ -263,6 +282,7 @@ const styles = StyleSheet.create({
   statLabel: { flex: 1, fontSize: 14, color: '#374151' },
   statCount: { fontSize: 16, fontWeight: '800' },
 
+  hint: { fontSize: 12, color: '#9ca3af', marginTop: 8, lineHeight: 16 },
   about: { fontSize: 13, color: '#4b5563', lineHeight: 19 },
   version: { fontSize: 12, color: '#9ca3af', marginTop: 10, marginBottom: 6 },
 });
