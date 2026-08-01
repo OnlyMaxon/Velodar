@@ -21,6 +21,7 @@ module.exports = () => ({
     orientation: 'portrait',
     userInterfaceStyle: 'light',
     newArchEnabled: true,
+    icon: './assets/icon.png',
     assetBundlePatterns: ['**/*'],
 
     ios: {
@@ -36,6 +37,12 @@ module.exports = () => ({
 
     android: {
       package: 'com.velodar.app',
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundImage: './assets/adaptive-background.png',
+        monochromeImage: './assets/adaptive-monochrome.png',
+        backgroundColor: '#1e3a8a',
+      },
       permissions: [
         'ACCESS_FINE_LOCATION',
         'ACCESS_COARSE_LOCATION',
