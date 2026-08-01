@@ -11,10 +11,12 @@ import {
   View,
 } from 'react-native';
 import { REPORT_TYPES } from '../constants/reportTypes';
+import { useThemedStyles } from '../theme/ThemeProvider';
 
 export default function AddReportModal({ visible, coords, onClose, onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
   const [selected, setSelected] = useState(null);
+  const styles = useThemedStyles(makeStyles);
 
   const close = () => {
     setSelected(null);
@@ -88,49 +90,50 @@ export default function AddReportModal({ visible, coords, onClose, onSubmit }) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 32,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 44,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#e5e7eb',
-    marginBottom: 14,
-  },
-  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 13, color: '#6b7280', marginTop: 4, marginBottom: 18 },
-  grid: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  card: {
-    flex: 1,
-    aspectRatio: 0.9,
-    borderWidth: 2,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    backgroundColor: '#fff',
-  },
-  cardPressed: { backgroundColor: '#f9fafb', transform: [{ scale: 0.97 }] },
-  cardDisabled: { opacity: 0.5 },
-  cardEmoji: { fontSize: 34, marginBottom: 8 },
-  cardLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#374151',
-    textAlign: 'center',
-  },
-  cancel: { marginTop: 18, alignItems: 'center', paddingVertical: 12 },
-  cancelText: { fontSize: 15, fontWeight: '600', color: '#6b7280' },
-});
+const makeStyles = (c) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: c.backdrop,
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      padding: 20,
+      paddingBottom: 32,
+    },
+    handle: {
+      alignSelf: 'center',
+      width: 44,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: c.border,
+      marginBottom: 14,
+    },
+    title: { fontSize: 20, fontWeight: '800', color: c.text },
+    subtitle: { fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 18 },
+    grid: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+    card: {
+      flex: 1,
+      aspectRatio: 0.9,
+      borderWidth: 2,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 8,
+      backgroundColor: c.surfaceAlt,
+    },
+    cardPressed: { backgroundColor: c.chipBg, transform: [{ scale: 0.97 }] },
+    cardDisabled: { opacity: 0.5 },
+    cardEmoji: { fontSize: 34, marginBottom: 8 },
+    cardLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: c.text,
+      textAlign: 'center',
+    },
+    cancel: { marginTop: 18, alignItems: 'center', paddingVertical: 12 },
+    cancelText: { fontSize: 15, fontWeight: '600', color: c.textMuted },
+  });

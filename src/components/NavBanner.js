@@ -8,6 +8,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDistance } from '../utils/geo';
+import { useThemedStyles } from '../theme/ThemeProvider';
 
 // ORS maneuver type (0–13) → Ionicons arrow. Kept coarse: left/right/straight
 // cover the common cases; roundabouts and U-turns get their own glyphs.
@@ -29,6 +30,7 @@ const TURN_ICON = {
 };
 
 export default function NavBanner({ progress }) {
+  const styles = useThemedStyles(makeStyles);
   if (!progress?.upcomingStep) return null;
 
   const { upcomingStep, distToManeuver } = progress;
@@ -51,37 +53,38 @@ export default function NavBanner({ progress }) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    position: 'absolute',
-    top: 0,
-    left: 12,
-    right: 12,
-    marginTop: 52,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: '#2563eb',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 10,
-  },
-  iconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: { flex: 1 },
-  dist: { fontSize: 22, fontWeight: '900', color: '#fff' },
-  instruction: { fontSize: 14, fontWeight: '600', color: '#e0e7ff', marginTop: 1 },
-});
+const makeStyles = (c) =>
+  StyleSheet.create({
+    wrap: {
+      position: 'absolute',
+      top: 0,
+      left: 12,
+      right: 12,
+      marginTop: 52,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      backgroundColor: c.primaryDark,
+      borderRadius: 16,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      shadowColor: '#000',
+      shadowOpacity: c.isDark ? 0.5 : 0.22,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 10,
+    },
+    iconWrap: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: 'rgba(255,255,255,0.18)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    body: { flex: 1 },
+    dist: { fontSize: 22, fontWeight: '900', color: '#fff' },
+    instruction: { fontSize: 14, fontWeight: '600', color: '#dbe4ff', marginTop: 1 },
+  });

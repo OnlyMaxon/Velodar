@@ -2,8 +2,9 @@
 //
 // Fully functional:
 //  - Filters: toggle each report type; hidden types disappear from the map.
-//  - Speed: pick the limit (20/25/30) and turn the over-limit alert on/off —
-//    both feed straight into useSpeedTracking.
+//  - Speed: pick the limit (20/25/30) and turn the over-limit alert on/off.
+//  - Wygląd: theme selector (system / light / dark) — feeds the ThemeProvider.
+//  - Radar: proximity alert toggle.
 //  - Stats: live count of visible reports nearby, by type.
 //  - About: version / blurb.
 
@@ -22,15 +23,24 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { REPORT_TYPES } from '../constants/reportTypes';
+import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 
 const PANEL_W = Math.min(320, Dimensions.get('window').width * 0.84);
 const LIMIT_OPTIONS = [20, 25, 30];
+const THEME_OPTIONS = [
+  { id: 'system', label: 'Systemowy', icon: 'phone-portrait-outline' },
+  { id: 'light', label: 'Jasny', icon: 'sunny-outline' },
+  { id: 'dark', label: 'Ciemny', icon: 'moon-outline' },
+];
 
+// Titled group; themed on its own so it stays a stable module-level component.
 function Section({ icon, title, children }) {
+  const { palette: c } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
-        <Ionicons name={icon} size={16} color="#6b7280" />
+        <Ionicons name={icon} size={16} color={c.textMuted} />
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       {children}
@@ -48,6 +58,8 @@ export default function SideMenu({
   reports,
 }) {
   const tx = useRef(new Animated.Value(-PANEL_W)).current;
+  const { mode, setMode, palette: c } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     Animated.timing(tx, {
@@ -94,7 +106,7 @@ export default function SideMenu({
                   <Switch
                     value={!!filters[t.id]}
                     onValueChange={() => onToggleFilter(t.id)}
-                    trackColor={{ true: t.color, false: '#e5e7eb' }}
+                    trackColor={{ true: t.color, false: c.switchOff }}
                     thumbColor="#fff"
                   />
                 </View>
@@ -123,15 +135,46 @@ export default function SideMenu({
 
               <View style={[styles.row, { marginTop: 6 }]}>
                 <View style={styles.rowLeft}>
-                  <Ionicons name="warning-outline" size={20} color="#dc2626" />
+                  <Ionicons name="warning-outline" size={20} color={c.danger} />
                   <Text style={styles.rowLabel}>Alert przekroczenia</Text>
                 </View>
                 <Switch
                   value={!!settings.alertEnabled}
                   onValueChange={(v) => onChangeSettings({ alertEnabled: v })}
-                  trackColor={{ true: '#dc2626', false: '#e5e7eb' }}
+                  trackColor={{ true: c.danger, false: c.switchOff }}
                   thumbColor="#fff"
                 />
+              </View>
+            </Section>
+
+            {/* Appearance / theme */}
+            <Section icon="contrast-outline" title="Wygląd">
+              <View style={styles.chips}>
+                {THEME_OPTIONS.map((o) => {
+                  const active = mode === o.id;
+                  return (
+                    <Pressable
+                      key={o.id}
+                      onPress={() => setMode(o.id)}
+                      style={[styles.themeChip, active && styles.chipActive]}
+                    >
+                      <Ionicons
+                        name={o.icon}
+                        size={17}
+                        color={active ? c.primary : c.textMuted}
+                      />
+                      <Text
+                        style={[
+                          styles.chipText,
+                          styles.themeChipText,
+                          active && styles.chipTextActive,
+                        ]}
+                      >
+                        {o.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </Section>
 
@@ -139,13 +182,13 @@ export default function SideMenu({
             <Section icon="radio-outline" title="Radar">
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
-                  <Ionicons name="notifications-outline" size={20} color="#2563eb" />
+                  <Ionicons name="notifications-outline" size={20} color={c.primary} />
                   <Text style={styles.rowLabel}>Alert o zbliżaniu</Text>
                 </View>
                 <Switch
                   value={!!settings.proximityEnabled}
                   onValueChange={(v) => onChangeSettings({ proximityEnabled: v })}
-                  trackColor={{ true: '#2563eb', false: '#e5e7eb' }}
+                  trackColor={{ true: c.primary, false: c.switchOff }}
                   thumbColor="#fff"
                 />
               </View>
@@ -186,103 +229,114 @@ export default function SideMenu({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
-  panel: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    width: PANEL_W,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    shadowOffset: { width: 4, height: 0 },
-    elevation: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  logo: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: '#2563eb',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brand: { fontSize: 20, fontWeight: '900', color: '#111827' },
-  tagline: { fontSize: 12, color: '#6b7280', marginTop: 1 },
+const makeStyles = (c) =>
+  StyleSheet.create({
+    backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: c.backdrop },
+    panel: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      width: PANEL_W,
+      backgroundColor: c.surface,
+      shadowColor: '#000',
+      shadowOpacity: c.isDark ? 0.5 : 0.2,
+      shadowRadius: 16,
+      shadowOffset: { width: 4, height: 0 },
+      elevation: 16,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 18,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: c.borderFaint,
+    },
+    logo: {
+      width: 46,
+      height: 46,
+      borderRadius: 14,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    brand: { fontSize: 20, fontWeight: '900', color: c.text },
+    tagline: { fontSize: 12, color: c.textMuted, marginTop: 1 },
 
-  section: {
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8fafc',
-  },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+    section: {
+      paddingHorizontal: 18,
+      paddingTop: 18,
+      paddingBottom: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: c.borderFaint,
+    },
+    sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+    sectionTitle: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: c.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
 
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 7,
-  },
-  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rowLabel: { fontSize: 15, color: '#111827', fontWeight: '500' },
-  dot: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dotEmoji: { fontSize: 15 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 7,
+    },
+    rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    rowLabel: { fontSize: 15, color: c.text, fontWeight: '500' },
+    dot: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dotEmoji: { fontSize: 15 },
 
-  subLabel: { fontSize: 13, color: '#6b7280', marginBottom: 8 },
-  chips: { flexDirection: 'row', gap: 8 },
-  chip: {
-    flex: 1,
-    paddingVertical: 9,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  chipActive: { borderColor: '#2563eb', backgroundColor: '#eff6ff' },
-  chipText: { fontSize: 13, fontWeight: '700', color: '#6b7280' },
-  chipTextActive: { color: '#2563eb' },
+    subLabel: { fontSize: 13, color: c.textMuted, marginBottom: 8 },
+    chips: { flexDirection: 'row', gap: 8 },
+    chip: {
+      flex: 1,
+      paddingVertical: 9,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      alignItems: 'center',
+    },
+    themeChip: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      alignItems: 'center',
+      gap: 3,
+    },
+    themeChipText: { fontSize: 12 },
+    chipActive: { borderColor: c.primary, backgroundColor: c.primarySoft },
+    chipText: { fontSize: 13, fontWeight: '700', color: c.textMuted },
+    chipTextActive: { color: c.primary },
 
-  statBig: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  statNumber: { fontSize: 30, fontWeight: '900', color: '#2563eb' },
-  statCaption: { fontSize: 12, color: '#6b7280' },
-  statRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 10 },
-  statEmoji: { fontSize: 18 },
-  statLabel: { flex: 1, fontSize: 14, color: '#374151' },
-  statCount: { fontSize: 16, fontWeight: '800' },
+    statBig: {
+      backgroundColor: c.surfaceAlt,
+      borderRadius: 14,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    statNumber: { fontSize: 30, fontWeight: '900', color: c.primary },
+    statCaption: { fontSize: 12, color: c.textMuted },
+    statRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 10 },
+    statEmoji: { fontSize: 18 },
+    statLabel: { flex: 1, fontSize: 14, color: c.text },
+    statCount: { fontSize: 16, fontWeight: '800' },
 
-  hint: { fontSize: 12, color: '#9ca3af', marginTop: 8, lineHeight: 16 },
-  about: { fontSize: 13, color: '#4b5563', lineHeight: 19 },
-  version: { fontSize: 12, color: '#9ca3af', marginTop: 10, marginBottom: 6 },
-});
+    hint: { fontSize: 12, color: c.textFaint, marginTop: 8, lineHeight: 16 },
+    about: { fontSize: 13, color: c.textMuted, lineHeight: 19 },
+    version: { fontSize: 12, color: c.textFaint, marginTop: 10, marginBottom: 6 },
+  });

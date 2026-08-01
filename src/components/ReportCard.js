@@ -6,9 +6,11 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { getReportType } from '../constants/reportTypes';
 import { formatAge } from '../utils/geo';
+import { useThemedStyles } from '../theme/ThemeProvider';
 
 export default function ReportCard({ report, onVote, onClose }) {
   const [busy, setBusy] = useState(null); // 'up' | 'down' | null
+  const styles = useThemedStyles(makeStyles);
   if (!report) return null;
 
   const type = getReportType(report.type);
@@ -80,47 +82,48 @@ export default function ReportCard({ report, onVote, onClose }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 24,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  close: { position: 'absolute', top: 10, right: 12, padding: 6, zIndex: 2 },
-  closeText: { fontSize: 16, color: '#9ca3af', fontWeight: '700' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
-  iconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: { fontSize: 24 },
-  title: { fontSize: 17, fontWeight: '800', color: '#111827' },
-  meta: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-  actions: { flexDirection: 'row', gap: 10 },
-  btn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1.5,
-  },
-  btnUp: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
-  btnUpActive: { backgroundColor: '#16a34a' },
-  btnDown: { borderColor: '#dc2626', backgroundColor: '#fef2f2' },
-  btnDownActive: { backgroundColor: '#dc2626' },
-  btnPressed: { opacity: 0.75 },
-  btnText: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  btnTextActive: { color: '#fff' },
-});
+const makeStyles = (c) =>
+  StyleSheet.create({
+    card: {
+      position: 'absolute',
+      left: 12,
+      right: 12,
+      bottom: 24,
+      backgroundColor: c.surface,
+      borderRadius: 20,
+      padding: 16,
+      shadowColor: '#000',
+      shadowOpacity: c.isDark ? 0.5 : 0.15,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    close: { position: 'absolute', top: 10, right: 12, padding: 6, zIndex: 2 },
+    closeText: { fontSize: 16, color: c.textFaint, fontWeight: '700' },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+    iconWrap: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    icon: { fontSize: 24 },
+    title: { fontSize: 17, fontWeight: '800', color: c.text },
+    meta: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+    actions: { flexDirection: 'row', gap: 10 },
+    btn: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 12,
+      alignItems: 'center',
+      borderWidth: 1.5,
+    },
+    btnUp: { borderColor: c.success, backgroundColor: c.successSoft },
+    btnUpActive: { backgroundColor: c.success },
+    btnDown: { borderColor: c.danger, backgroundColor: c.dangerSoft },
+    btnDownActive: { backgroundColor: c.danger },
+    btnPressed: { opacity: 0.75 },
+    btnText: { fontSize: 13, fontWeight: '700', color: c.text },
+    btnTextActive: { color: '#fff' },
+  });

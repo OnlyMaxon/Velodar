@@ -9,6 +9,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDistance, formatDuration } from '../utils/geo';
+import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 
 export default function RoutePanel({
   mode, // 'preview' | 'nav'
@@ -21,16 +22,19 @@ export default function RoutePanel({
   onCancel,
   onRetry,
 }) {
+  const { palette: c } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <SafeAreaView style={styles.wrap} pointerEvents="box-none" edges={['bottom']}>
       <View style={styles.card}>
         {/* Loading the route */}
         {mode === 'preview' && status === 'loading' && (
           <View style={styles.centerRow}>
-            <ActivityIndicator color="#2563eb" />
+            <ActivityIndicator color={c.primary} />
             <Text style={styles.loadingText}>Wyznaczam trasę…</Text>
             <Pressable onPress={onCancel} hitSlop={10} style={styles.closeInline}>
-              <Ionicons name="close" size={20} color="#9ca3af" />
+              <Ionicons name="close" size={20} color={c.textFaint} />
             </Pressable>
           </View>
         )}
@@ -39,7 +43,7 @@ export default function RoutePanel({
         {mode === 'preview' && status === 'error' && (
           <View>
             <View style={styles.header}>
-              <Ionicons name="alert-circle" size={22} color="#dc2626" />
+              <Ionicons name="alert-circle" size={22} color={c.danger} />
               <Text style={styles.errorText} numberOfLines={2}>
                 {error || 'Nie udało się wyznaczyć trasy'}
               </Text>
@@ -122,73 +126,74 @@ export default function RoutePanel({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 0,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 8,
-  },
+const makeStyles = (c) =>
+  StyleSheet.create({
+    wrap: {
+      position: 'absolute',
+      left: 12,
+      right: 12,
+      bottom: 0,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 20,
+      padding: 16,
+      marginBottom: 24,
+      shadowColor: '#000',
+      shadowOpacity: c.isDark ? 0.5 : 0.16,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 8,
+    },
 
-  centerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  loadingText: { flex: 1, fontSize: 15, fontWeight: '600', color: '#374151' },
-  closeInline: { padding: 2 },
+    centerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    loadingText: { flex: 1, fontSize: 15, fontWeight: '600', color: c.text },
+    closeInline: { padding: 2 },
 
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
-  pin: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2563eb',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { fontSize: 16, fontWeight: '800', color: '#111827' },
-  meta: { fontSize: 13.5, fontWeight: '600', color: '#6b7280', marginTop: 2 },
-  errorText: { flex: 1, fontSize: 14, fontWeight: '600', color: '#b91c1c' },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+    pin: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: { fontSize: 16, fontWeight: '800', color: c.text },
+    meta: { fontSize: 13.5, fontWeight: '600', color: c.textMuted, marginTop: 2 },
+    errorText: { flex: 1, fontSize: 14, fontWeight: '600', color: c.danger },
 
-  actions: { flexDirection: 'row', gap: 10 },
-  btnGhost: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-  },
-  btnGhostText: { fontSize: 15, fontWeight: '700', color: '#374151' },
-  btnPrimary: {
-    flex: 2,
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2563eb',
-  },
-  btnPrimaryText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
+    actions: { flexDirection: 'row', gap: 10 },
+    btnGhost: {
+      flex: 1,
+      paddingVertical: 13,
+      borderRadius: 12,
+      alignItems: 'center',
+      backgroundColor: c.chipBg,
+    },
+    btnGhostText: { fontSize: 15, fontWeight: '700', color: c.text },
+    btnPrimary: {
+      flex: 2,
+      flexDirection: 'row',
+      gap: 8,
+      paddingVertical: 13,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
+    btnPrimaryText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+    pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
 
-  navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  navStats: { flex: 1 },
-  navEta: { fontSize: 22, fontWeight: '900', color: '#111827' },
-  navRemaining: { fontSize: 13.5, fontWeight: '600', color: '#6b7280', marginTop: 1 },
-  btnEnd: {
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: 12,
-    backgroundColor: '#dc2626',
-  },
-  btnEndText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});
+    navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    navStats: { flex: 1 },
+    navEta: { fontSize: 22, fontWeight: '900', color: c.text },
+    navRemaining: { fontSize: 13.5, fontWeight: '600', color: c.textMuted, marginTop: 1 },
+    btnEnd: {
+      paddingVertical: 12,
+      paddingHorizontal: 22,
+      borderRadius: 12,
+      backgroundColor: c.danger,
+    },
+    btnEndText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+  });

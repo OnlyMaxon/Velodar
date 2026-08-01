@@ -8,10 +8,12 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getReportType } from '../constants/reportTypes';
+import { useThemedStyles } from '../theme/ThemeProvider';
 
 export default function ProximityBanner({ approaching }) {
   const y = useRef(new Animated.Value(-160)).current;
   const pulse = useRef(new Animated.Value(1)).current;
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     if (approaching) {
@@ -63,41 +65,42 @@ export default function ProximityBanner({ approaching }) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 60, // sit below the top bar
-    minWidth: 240,
-    maxWidth: '92%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingLeft: 10,
-    paddingRight: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 10,
-  },
-  icon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emoji: { fontSize: 22 },
-  body: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '800', color: '#111827' },
-  dist: { fontSize: 13, fontWeight: '600', color: '#6b7280', marginTop: 1 },
-});
+const makeStyles = (c) =>
+  StyleSheet.create({
+    wrap: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginTop: 60, // sit below the top bar
+      minWidth: 240,
+      maxWidth: '92%',
+      backgroundColor: c.surface,
+      borderRadius: 16,
+      paddingVertical: 10,
+      paddingLeft: 10,
+      paddingRight: 16,
+      shadowColor: '#000',
+      shadowOpacity: c.isDark ? 0.5 : 0.22,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 10,
+    },
+    icon: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emoji: { fontSize: 22 },
+    body: { flex: 1 },
+    title: { fontSize: 15, fontWeight: '800', color: c.text },
+    dist: { fontSize: 13, fontWeight: '600', color: c.textMuted, marginTop: 1 },
+  });

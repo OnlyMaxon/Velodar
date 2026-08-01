@@ -2,8 +2,8 @@
 //  - MapView centred on the user, showing nearby report markers (live-synced).
 //  - Search + cycling route (Photon geocoding + OpenRouteService), drawn as a
 //    Polyline with a next-turn banner and live ETA.
-//  - Speed readout + over-limit alert (useSpeedTracking, configurable via menu).
-//  - Side menu (filters / speed settings / stats), "locate me", and "+" to report.
+//  - Speed readout (bottom-left) + over-limit alert (useSpeedTracking).
+//  - Side menu (filters / speed / theme / stats), "locate me", and "+" to report.
 //  - Tapping a marker opens a bottom card with "actual" / "gone" voting.
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -27,6 +27,8 @@ import { useProximityAlerts } from '../hooks/useProximityAlerts';
 import { useSearch } from '../hooks/useSearch';
 import { useRoute } from '../hooks/useRoute';
 import { radiusToDelta, routeProgress } from '../utils/geo';
+import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
+import { darkMapStyle } from '../theme/mapStyle';
 
 import ReportMarker from '../components/ReportMarker';
 import ReportCard from '../components/ReportCard';
@@ -52,6 +54,9 @@ const ROUTE_PADDING = { top: 150, right: 60, bottom: 250, left: 60 };
 export default function MapScreen() {
   const mapRef = useRef(null);
   const centeredOnce = useRef(false);
+
+  const { resolved, palette: c } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const { location, permissionDenied, refresh: refreshLocation } = useLocation();
 
@@ -219,6 +224,8 @@ export default function MapScreen() {
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
+        userInterfaceStyle={resolved} // iOS Apple Maps dark/light
+        customMapStyle={resolved === 'dark' ? darkMapStyle : []} // Android Google Maps
         onPress={() => setSelected(null)}
       >
         {visibleReports.map((r) => (
@@ -229,7 +236,7 @@ export default function MapScreen() {
         {route?.coordinates?.length > 0 && (
           <Polyline
             coordinates={route.coordinates}
-            strokeColor="#2563eb"
+            strokeColor={c.primary}
             strokeWidth={5}
             lineCap="round"
             lineJoin="round"
@@ -242,7 +249,7 @@ export default function MapScreen() {
               longitude: destination.longitude,
             }}
             title={destination.title}
-            pinColor="#2563eb"
+            pinColor={c.primary}
           />
         )}
       </MapView>
@@ -253,22 +260,16 @@ export default function MapScreen() {
       {/* Radar: "report ahead" banner as you approach one. */}
       <ProximityBanner approaching={approaching} />
 
-      {/* Top bar: menu button + speed */}
+      {/* Top bar: menu button */}
       <SafeAreaView style={styles.topBar} pointerEvents="box-none">
         <Pressable
           style={({ pressed }) => [styles.menuBtn, pressed && styles.pressed]}
           onPress={() => setMenuOpen(true)}
           hitSlop={8}
         >
-          <Ionicons name="menu" size={22} color="#111827" />
+          <Ionicons name="menu" size={22} color={c.text} />
           <Text style={styles.brandText}>Velodar</Text>
         </Pressable>
-
-        <SpeedIndicator
-          speedKmh={speedKmh}
-          isOverLimit={isOverLimit}
-          limitKmh={limitKmh}
-        />
       </SafeAreaView>
 
       {/* Search field (idle) or next-turn banner (navigating). */}
@@ -298,6 +299,21 @@ export default function MapScreen() {
         </SafeAreaView>
       )}
 
+      {/* Live speed — bottom-left; lifts above the route panel / report card. */}
+      <SafeAreaView
+        style={[
+          styles.speed,
+          { bottom: routeActive ? 158 : selected ? 200 : 28 },
+        ]}
+        pointerEvents="none"
+      >
+        <SpeedIndicator
+          speedKmh={speedKmh}
+          isOverLimit={isOverLimit}
+          limitKmh={limitKmh}
+        />
+      </SafeAreaView>
+
       {/* Bottom controls. While routing, the RoutePanel takes over the bottom
           and only "locate me" floats above it; otherwise the usual locate + add. */}
       {routeActive ? (
@@ -308,7 +324,7 @@ export default function MapScreen() {
               onPress={recenter}
               hitSlop={8}
             >
-              <Ionicons name="locate" size={22} color="#2563eb" />
+              <Ionicons name="locate" size={22} color={c.primary} />
             </Pressable>
           </SafeAreaView>
 
@@ -331,7 +347,7 @@ export default function MapScreen() {
             onPress={recenter}
             hitSlop={8}
           >
-            <Ionicons name="locate" size={22} color="#2563eb" />
+            <Ionicons name="locate" size={22} color={c.primary} />
           </Pressable>
 
           <Pressable
@@ -341,9 +357,9 @@ export default function MapScreen() {
             hitSlop={8}
           >
             {location ? (
-              <Ionicons name="add" size={34} color="#fff" />
+              <Ionicons name="add" size={34} color={c.onPrimary} />
             ) : (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={c.onPrimary} />
             )}
           </Pressable>
         </SafeAreaView>
@@ -378,95 +394,101 @@ export default function MapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#e5e7eb' },
+const makeStyles = (c) =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: c.bg },
 
-  topBar: {
-    position: 'absolute',
-    top: 0,
-    left: 12,
-    right: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  menuBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    paddingLeft: 12,
-    paddingRight: 16,
-    paddingVertical: 9,
-    borderRadius: 999,
-    marginTop: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  brandText: { fontSize: 15, fontWeight: '800', color: '#111827' },
-  pressed: { opacity: 0.7, transform: [{ scale: 0.96 }] },
+    topBar: {
+      position: 'absolute',
+      top: 0,
+      left: 12,
+      right: 12,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    menuBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: c.surface,
+      paddingLeft: 12,
+      paddingRight: 16,
+      paddingVertical: 9,
+      borderRadius: 999,
+      marginTop: 8,
+      shadowColor: '#000',
+      shadowOpacity: c.isDark ? 0.35 : 0.12,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 3,
+    },
+    brandText: { fontSize: 15, fontWeight: '800', color: c.text },
+    pressed: { opacity: 0.7, transform: [{ scale: 0.96 }] },
 
-  permWarn: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  permPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 110, // below the search bar
-    backgroundColor: 'rgba(180,83,9,0.96)',
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-  },
-  permText: { color: '#fff', fontSize: 12.5, fontWeight: '600' },
+    permWarn: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    permPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 110, // below the search bar
+      backgroundColor: 'rgba(180,83,9,0.96)',
+      paddingVertical: 9,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+    },
+    permText: { color: '#fff', fontSize: 12.5, fontWeight: '600' },
 
-  controls: {
-    position: 'absolute',
-    right: 16,
-    bottom: 28,
-    alignItems: 'center',
-    gap: 14,
-  },
-  // "Locate me" floating just above the route panel while routing.
-  routeLocate: {
-    position: 'absolute',
-    right: 16,
-    bottom: 150,
-    alignItems: 'flex-end',
-  },
-  locateBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
-  },
-  fab: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#2563eb',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#2563eb',
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 8,
-  },
-  fabPressed: { backgroundColor: '#1d4ed8', transform: [{ scale: 0.96 }] },
-});
+    controls: {
+      position: 'absolute',
+      right: 16,
+      bottom: 28,
+      alignItems: 'center',
+      gap: 14,
+    },
+    // Live-speed badge, pinned bottom-left (bottom offset set inline per mode).
+    speed: {
+      position: 'absolute',
+      left: 16,
+      alignItems: 'flex-start',
+    },
+    routeLocate: {
+      position: 'absolute',
+      right: 16,
+      bottom: 150,
+      alignItems: 'flex-end',
+    },
+    locateBtn: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: c.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOpacity: c.isDark ? 0.4 : 0.18,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 5,
+    },
+    fab: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: c.primary,
+      shadowOpacity: 0.4,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 8,
+    },
+    fabPressed: { backgroundColor: c.primaryDark, transform: [{ scale: 0.96 }] },
+  });
