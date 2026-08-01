@@ -17,6 +17,7 @@ jobs:
       # secrets: Settings -> Secrets and variables -> Actions.
       EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
       EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_ORS_API_KEY: ${{ secrets.EXPO_PUBLIC_ORS_API_KEY }}
 
     steps:
       - name: Checkout

@@ -36,6 +36,92 @@ export function radiusToDelta(radiusMeters, lat) {
   return { latitudeDelta: latDelta * 2.2, longitudeDelta: lngDelta * 2.2 };
 }
 
+// Human distance label, Polish units. Rounds to a tidy value.
+export function formatDistance(m) {
+  if (m == null || Number.isNaN(m)) return '';
+  if (m < 1000) return `${Math.max(0, Math.round(m / 10) * 10)} m`;
+  const km = m / 1000;
+  return `${km.toFixed(km < 10 ? 1 : 0)} km`;
+}
+
+// Human duration label, Polish units.
+export function formatDuration(sec) {
+  if (sec == null || Number.isNaN(sec)) return '';
+  const min = Math.max(0, Math.round(sec / 60));
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h} godz. ${m} min` : `${h} godz.`;
+}
+
+// Live progress along a fetched route given the user's current position.
+// Straight-line approximations — accurate enough for a heads-up nav banner,
+// not survey grade. Returns null until we have both a route and a fix.
+export function routeProgress(route, loc) {
+  const coords = route?.coordinates;
+  if (!coords?.length || !loc) return null;
+
+  // Nearest route vertex to the user.
+  let nearestIdx = 0;
+  let nearestDist = Infinity;
+  for (let i = 0; i < coords.length; i++) {
+    const d = distanceMeters(
+      loc.latitude,
+      loc.longitude,
+      coords[i].latitude,
+      coords[i].longitude
+    );
+    if (d < nearestDist) {
+      nearestDist = d;
+      nearestIdx = i;
+    }
+  }
+
+  // Remaining distance = hop to the route + along the route to the end.
+  let remaining = nearestDist;
+  for (let i = nearestIdx; i < coords.length - 1; i++) {
+    remaining += distanceMeters(
+      coords[i].latitude,
+      coords[i].longitude,
+      coords[i + 1].latitude,
+      coords[i + 1].longitude
+    );
+  }
+
+  // Current step = the last one that has started; the upcoming maneuver is the
+  // next step (or the goal, if we're on the final leg).
+  const steps = route.steps || [];
+  let cur = 0;
+  for (let i = 0; i < steps.length; i++) {
+    if (steps[i].wayPoint <= nearestIdx) cur = i;
+    else break;
+  }
+  const currentStep = steps[cur] || null;
+  const upcomingStep = steps[cur + 1] || currentStep;
+
+  // Distance to the next turn = to the end vertex of the current step.
+  const turnIdx = currentStep
+    ? Math.min(currentStep.wayPointEnd, coords.length - 1)
+    : nearestIdx;
+  const turnPt = coords[turnIdx];
+  const distToManeuver = turnPt
+    ? distanceMeters(loc.latitude, loc.longitude, turnPt.latitude, turnPt.longitude)
+    : 0;
+
+  // ETA scales the total duration by the fraction of distance left.
+  const frac = route.distance ? Math.min(1, remaining / route.distance) : 0;
+  const etaSeconds = Math.round((route.duration || 0) * frac);
+
+  return {
+    remaining, // metres to destination
+    etaSeconds,
+    upcomingStep, // { instruction, type, … } — the next maneuver
+    distToManeuver, // metres to that maneuver
+    offRoute: nearestDist > 60, // user drifted off the drawn line
+    arrived: remaining < 30,
+  };
+}
+
 // "5 min temu" style relative time (Polish), coarse buckets are fine here.
 export function formatAge(createdAtIso, now = Date.now()) {
   const created = new Date(createdAtIso).getTime();
