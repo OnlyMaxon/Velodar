@@ -147,3 +147,8 @@ appears within a second without a reload.
 - Background location + trip history.
 - Real accounts (upgrade the anonymous user) & moderation.
 ```
+
+For us: dont touch!
+Openrouteservice
+Supabase
+
